@@ -1,0 +1,42 @@
+name: Phone reminders
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      test:
+        description: "Send a test notification now"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        working-directory: reminders
+        run: npm install --no-audit --no-fund
+      - name: Send reminders
+        working-directory: reminders
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.test && '1' || '0' }}
+        run: node send.mjs
+      - name: Keep alive
+        if: github.event_name == 'schedule'
+        run: |
+          if [ "$(date -u +%d)" = "01" ] && [ "$(date -u +%H)" = "03" ]; then
+            date -u > .keepalive
+            git config user.name "go-jessie-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .keepalive && git commit -m "Keep reminders running" && git push || true
+          fi
