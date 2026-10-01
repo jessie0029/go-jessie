@@ -1,5 +1,5 @@
 // GO JESSIE! service worker: offline app shell + reminder notifications.
-const VERSION = "gj-v1";
+const VERSION = "gj-v2";
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "logic.js", "sync.js", "crypto.js", "quotes.js", "config.js",
   "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/badge-96.png",
@@ -21,7 +21,7 @@ self.addEventListener("fetch", (e) => {
   const sameOrigin = url.origin === location.origin;
   const isStatic = /fonts\.(googleapis|gstatic)\.com|api\.fontshare\.com|cdn\.fontshare\.com|www\.gstatic\.com\/firebasejs/.test(url.href);
   if (sameOrigin) {
-    e.respondWith(fetch(req).then((res) => {
+    e.respondWith(fetch(req, { cache: "no-cache" }).then((res) => {
       if (res.ok) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
       return res;
     }).catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match("index.html"))));
