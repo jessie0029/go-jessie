@@ -33,6 +33,14 @@ function putEvents(evs) { for (const e of evs) { S.events[e.id] = e; Sync.write(
 function putReward(r) { r.updated = Date.now(); S.rewards[r.id] = r; save(); Sync.write("rewards", r); }
 function putSettings(patch) { S.settings = { ...S.settings, ...patch, updated: Date.now() }; save(); Sync.write("settings", S.settings); }
 
+// Tasks saved under a renamed tag (e.g. Admin → Chores) move to the new name.
+function migrateTags() {
+  for (const t of Object.values(S.tasks)) {
+    const to = L.RENAMED_TAGS[t.tag];
+    if (to) putTask({ ...t, tag: to });
+  }
+}
+
 function toggleDone(id) {
   const t = S.tasks[id]; if (!t) return;
   if (!t.done) {
@@ -666,7 +674,11 @@ Sync.init({
       if ((item.updated || 0) > (S.settings.updated || 0)) S.settings = { ...S.settings, ...item, points: { ...L.DEFAULT_POINTS, ...item.points } };
       else if ((item.updated || 0) < (S.settings.updated || 0)) Sync.write("settings", S.settings);
     }
-    else { const cur = S[kind][item.id]; if (!cur || kind === "events" || (item.updated || 0) >= (cur.updated || 0)) S[kind][item.id] = item; }
+    else {
+      const cur = S[kind][item.id];
+      if (!cur || kind === "events" || (item.updated || 0) >= (cur.updated || 0)) S[kind][item.id] = item;
+      if (kind === "tasks" && L.RENAMED_TAGS[S.tasks[item.id]?.tag]) putTask({ ...S.tasks[item.id], tag: L.RENAMED_TAGS[S.tasks[item.id].tag] });
+    }
     save(); softRender();
   },
   localItems: (kind) => kind === "settings" ? S.settings : Object.values(S[kind]),
@@ -678,6 +690,7 @@ if (S.settings.tz !== L.DEFAULT_SETTINGS.tz) putSettings({ tz: L.DEFAULT_SETTING
 try { const th = localStorage.getItem("gj-theme"); if (th && th !== "system") document.documentElement.setAttribute("data-theme", th); } catch {}
 const start = (location.hash || "#home").slice(1);
 ui.view = NAV.some(([v]) => v === start) ? start : "home";
+migrateTags();
 checkMisses();
 render();
 setInterval(() => { checkMisses(); if (!sheetOpen() && (ui.view === "home" || ui.view === "tasks")) render(); localReminders(); }, 60000);

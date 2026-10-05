@@ -1,6 +1,7 @@
 // Pure logic: dates, countdowns, points, streaks, levels, summaries. No DOM here.
 
-export const TAGS = ["Daily", "Work", "Admin", "Goal"];
+export const TAGS = ["Daily", "Work", "Chores", "Goal", "Misc"];
+export const RENAMED_TAGS = { Admin: "Chores" }; // old name → new name
 export const PRIORITIES = ["low", "normal", "high"];
 
 export const DEFAULT_POINTS = { done: 10, ontime: 5, high: 5, snooze: -5, miss: -10, streak: 5, streakMin: 3 };

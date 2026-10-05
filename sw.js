@@ -1,5 +1,5 @@
 // GO JESSIE! service worker: offline app shell + reminder notifications.
-const VERSION = "gj-v2";
+const VERSION = "gj-v3";
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "logic.js", "sync.js", "crypto.js", "quotes.js", "config.js",
   "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/badge-96.png",
