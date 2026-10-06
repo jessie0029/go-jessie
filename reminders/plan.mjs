@@ -19,8 +19,11 @@ export function plan({ settings = {}, tasks = [], sentDay = null, now = new Date
   const alertDays = Array.isArray(settings.alertDays) ? settings.alertDays : [7, 3, 1];
   const { today, hour } = localNow(settings.tz, now);
   if (sentDay === today) return { send: false, today, reason: `Already sent today (${today}).` };
-  // Send at the morning hour, or catch up within 6 hours if GitHub ran late.
-  if (hour < morning || hour >= morning + 6) return { send: false, today, reason: `Local hour ${hour}, morning summary at ${morning}.` };
+  // GitHub's scheduler often skips hours, so send at the first run from the morning hour onwards,
+  // any time until 22:00 (no late-night pings). Once sent, nothing more that day.
+  const LAST = 22;
+  if (hour < morning) return { send: false, today, reason: `Local hour ${hour}, too early: morning summary from ${morning}:00.` };
+  if (hour >= Math.max(LAST, morning + 1)) return { send: false, today, reason: `Local hour ${hour}, too late: nothing sent after ${LAST}:00.` };
 
   const open = tasks.filter((t) => !t.done && !t.deleted);
   const urg = (t) => Math.min(t.deadline ? Date.parse(t.deadline) : Infinity, t.target ? Date.parse(t.target + "T23:59") : Infinity);
